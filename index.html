@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Recibos de Agua - Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        :root { --blue-dark: #2c3e50; --blue-light: #3498db; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; color: #333; }
+        .main-card { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--blue-light); }
+        
+        /* Estilo para campos editables */
+        .input-editable { 
+            background-color: #fffde7 !important; /* Amarillo suave */
+            border: 1px solid #fbc02d !important;
+        }
+        .input-editable:focus {
+            background-color: #fff9c4 !important;
+            border-color: #f9a825 !important;
+            box-shadow: 0 0 0 0.25 margin rgba(251, 192, 45, 0.25);
+        }
+
+        .receipt-container { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            border: 1px solid #ddd;
+            position: relative;
+        }
+        .receipt-header { border-bottom: 2px solid var(--blue-dark); margin-bottom: 15px; padding-bottom: 10px; }
+        .concept-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f1f1; }
+        .total-box { background: var(--blue-dark); color: white; padding: 10px; border-radius: 5px; margin-top: 15px; }
+        
+        .btn-pdf { background-color: #e74c3c; color: white; border: none; transition: 0.3s; }
+        .btn-pdf:hover { background-color: #c0392b; color: white; }
+
+        @media (max-width: 768px) { .container { padding: 10px; } }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">CÁLCULO DE RECIBO DE AGUA - SEDAPAL</h2>
+        <p class="text-muted">CONTROL DE INQUILINOS</p>
+    </div>
+
+    <!-- DATOS PRINCIPALES -->
+    <div class="card main-card mb-5">
+        <div class="card-header bg-white fw-bold text-primary">DATOS DEL RECIBO GLOBAL</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label class="small fw-bold">Lectura Anterior</label>
+                    <input type="number" id="m_prev_r" class="form-control form-control-sm input-editable" value="1000" oninput="calc()">
+                </div>
+                <div class="col-md-2">
+                    <label class="small fw-bold">Lectura Actual</label>
+                    <input type="number" id="m_curr_r" class="form-control form-control-sm input-editable" value="1050" oninput="calc()">
+                </div>
+                <div class="col-md-2">
+                    <label class="small fw-bold">Fecha Ant.</label>
+                    <input type="date" id="m_prev_d" class="form-control form-control-sm input-editable" value="2024-01-01" oninput="calc()">
+                </div>
+                <div class="col-md-2">
+                    <label class="small fw-bold">Fecha Act.</label>
+                    <input type="date" id="m_curr_d" class="form-control form-control-sm input-editable" value="2024-01-31" oninput="calc()">
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="small fw-bold">Agua (S/.)</label>
+                    <input type="number" id="v_water" class="form-control form-control-sm input-editable" value="85.50" oninput="calc()">
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="small fw-bold">Alcantarillado</label>
+                    <input type="number" id="v_sewer" class="form-control form-control-sm input-editable" value="32.20" oninput="calc()">
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="small fw-bold">Cargo Fijo</label>
+                    <input type="number" id="v_fixed" class="form-control form-control-sm input-editable" value="6.50" oninput="calc()">
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="small fw-bold">Mora</label>
+                    <input type="number" id="v_mora" class="form-control form-control-sm input-editable" value="0.00" oninput="calc()">
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="small fw-bold">N° Inquilinos</label>
+                    <input type="number" id="n_tenants" class="form-control form-control-sm input-editable" value="3" oninput="calc()">
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="small fw-bold">Redondeo Ant.</label>
+                    <input type="number" id="v_red_ant" class="form-control form-control-sm input-editable" value="0.00" oninput="calc()">
+                </div>
+                <div class="col-md-2 col-6">
+                    <label class="small fw-bold">Redondeo Act.</label>
+                    <input type="number" id="v_red_act" class="form-control form-control-sm input-editable" value="0.00" oninput="calc()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRILLA DE INQUILINOS -->
+    <div class="row g-4" id="tenants_grid"></div>
+</div>
+
+<script>
+    function calc() {
+        const d = {
+            mPrevR: parseFloat(document.getElementById('m_prev_r').value) || 0,
+            mCurrR: parseFloat(document.getElementById('m_curr_r').value) || 0,
+            mPrevD: new Date(document.getElementById('m_prev_d').value),
+            mCurrD: new Date(document.getElementById('m_curr_d').value),
+            vWater: parseFloat(document.getElementById('v_water').value) || 0,
+            vSewer: parseFloat(document.getElementById('v_sewer').value) || 0,
+            vFixed: parseFloat(document.getElementById('v_fixed').value) || 0,
+            vMora: parseFloat(document.getElementById('v_mora').value) || 0,
+            vRedAnt: parseFloat(document.getElementById('v_red_ant').value) || 0,
+            vRedAct: parseFloat(document.getElementById('v_red_act').value) || 0,
+            nTenants: parseInt(document.getElementById('n_tenants').value) || 1
+        };
+
+        const totalDays = Math.floor((d.mCurrD - d.mPrevD) / (864e5)) + 1;
+        const diffTotal = d.mCurrR - d.mPrevR;
+        const tAgua = diffTotal > 0 ? (d.vWater / diffTotal) : 0;
+        const tDesague = diffTotal > 0 ? (d.vSewer / diffTotal) : 0;
+
+        for(let i=1; i<=3; i++) {
+            const iPrevR = parseFloat(document.getElementById(`i${i}_prev_r`).value) || 0;
+            const iCurrR = parseFloat(document.getElementById(`i${i}_curr_r`).value) || 0;
+            const iPrevD = new Date(document.getElementById(`i${i}_prev_d`).value);
+            const iCurrD = new Date(document.getElementById(`i${i}_curr_d`).value);
+
+            const iDays = Math.floor((iCurrD - iPrevD) / (864e5)) + 1;
+            const iDiff = iCurrR - iPrevR;
+            const iDaily = iDays > 0 ? (iDiff / iDays) : 0;
+            const iConsMes = iDaily * totalDays;
+
+            const cWater = tAgua * iConsMes;
+            const cSewer = tDesague * iConsMes;
+            const cFixed = d.vFixed / d.nTenants;
+            const cIgv = 0.18 * (cWater + cSewer + cFixed);
+            const cMora = d.vMora / d.nTenants;
+            const cRedAnt = d.vRedAnt / d.nTenants;
+            const cRedAct = d.vRedAct / d.nTenants;
+            const total = cWater + cSewer + cFixed + cIgv + cMora + cRedAnt + cRedAct;
+
+            document.getElementById(`i${i}_res_cons`).innerText = iConsMes.toFixed(2);
+            document.getElementById(`i${i}_val_water`).innerText = cWater.toFixed(2);
+            document.getElementById(`i${i}_val_sewer`).innerText = cSewer.toFixed(2);
+            document.getElementById(`i${i}_val_fixed`).innerText = cFixed.toFixed(2);
+            document.getElementById(`i${i}_val_igv`).innerText = cIgv.toFixed(2);
+            document.getElementById(`i${i}_val_mora`).innerText = cMora.toFixed(2);
+            document.getElementById(`i${i}_val_red_ant`).innerText = cRedAnt.toFixed(2);
+            document.getElementById(`i${i}_val_red_act`).innerText = cRedAct.toFixed(2);
+            document.getElementById(`i${i}_val_total`).innerText = total.toFixed(2);
+        }
+    }
+
+    function render() {
+        const grid = document.getElementById('tenants_grid');
+        let html = '';
+        for(let i=1; i<=3; i++) {
+            html += `
+            <div class="col-lg-4 col-md-6">
+                <div class="receipt-container" id="pdf_area_${i}">
+                    <div class="receipt-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 fw-bold">RECIBO AGUA</h5>
+                            <input type="text" class="form-control form-control-sm border-0 p-0 fw-bold" 
+                                value="Inquilino #${i}" style="background: transparent; color: var(--blue-dark);">
+                        </div>
+                        <button class="btn btn-pdf btn-sm d-print-none" onclick="exportPDF(${i})" id="btn_pdf_${i}">PDF</button>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="row g-1 mb-2 d-print-none" id="inputs_${i}">
+                            <div class="col-6">
+                                <label class="small fw-bold">Lect. Ant.</label>
+                                <input type="number" id="i${i}_prev_r" class="form-control form-control-sm input-editable" value="20" oninput="calc()">
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold">Lect. Act.</label>
+                                <input type="number" id="i${i}_curr_r" class="form-control form-control-sm input-editable" value="30" oninput="calc()">
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold">Fecha Ant.</label>
+                                <input type="date" id="i${i}_prev_d" class="form-control form-control-sm input-editable" value="2024-01-01" oninput="calc()">
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold">Fecha Act.</label>
+                                <input type="date" id="i${i}_curr_d" class="form-control form-control-sm input-editable" value="2024-01-31" oninput="calc()">
+                            </div>
+                        </div>
+                        <div class="concept-item"><span>Consumo estimado:</span><strong><span id="i${i}_res_cons">0</span> m³</strong></div>
+                    </div>
+
+                    <div class="concepts small">
+                        <div class="concept-item"><span>Agua</span><span> <span id="i${i}_val_water">0</span></span></div>
+                        <div class="concept-item"><span>Desagüe</span><span> <span id="i${i}_val_sewer">0</span></span></div>
+                        <div class="concept-item"><span>Cargo Fijo</span><span> <span id="i${i}_val_fixed">0</span></span></div>
+                        <div class="concept-item"><span>IGV (18%)</span><span> <span id="i${i}_val_igv">0</span></span></div>
+                        <div class="concept-item"><span>Mora</span><span> <span id="i${i}_val_mora">0</span></span></div>
+                        <div class="concept-item"><span>Redondeo Ant.</span><span> <span id="i${i}_val_red_ant">0</span></span></div>
+                        <div class="concept-item"><span>Redondeo Act.</span><span> <span id="i${i}_val_red_act">0</span></span></div>
+                    </div>
+
+                    <div class="total-box d-flex justify-content-between">
+                        <span>TOTAL A PAGAR</span>
+                        <span class="fw-bold">S/. <span id="i${i}_val_total">0</span></span>
+                    </div>
+                </div>
+            </div>`;
+        }
+        grid.innerHTML = html;
+        calc();
+    }
+
+    async function exportPDF(id) {
+        const element = document.getElementById(`pdf_area_${id}`);
+        const button = document.getElementById(`btn_pdf_${id}`);
+        const inputs = document.getElementById(`inputs_${id}`);
+
+        button.style.visibility = 'hidden';
+        inputs.style.display = 'none';
+
+        const opt = {
+            margin: 10,
+            filename: `Recibo_Inquilino_${id}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+            jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+        };
+
+        try {
+            await html2pdf().set(opt).from(element).save();
+        } finally {
+            button.style.visibility = 'visible';
+            inputs.style.display = 'flex';
+        }
+    }
+
+    window.onload = render;
+</script>
+
+</body>
+</html>
