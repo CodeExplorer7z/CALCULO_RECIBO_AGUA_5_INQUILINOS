@@ -14,15 +14,14 @@
         body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; color: #333; }
         .main-card { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--blue-light); }
         
-        /* Estilo para campos editables */
         .input-editable { 
-            background-color: #fffde7 !important; /* Amarillo suave */
+            background-color: #fffde7 !important; 
             border: 1px solid #fbc02d !important;
         }
         .input-editable:focus {
             background-color: #fff9c4 !important;
             border-color: #f9a825 !important;
-            box-shadow: 0 0 0 0.25 margin rgba(251, 192, 45, 0.25);
+            box-shadow: 0 0 0 0.25rem rgba(251, 192, 45, 0.25);
         }
 
         .receipt-container { 
@@ -31,6 +30,7 @@
             border-radius: 8px; 
             border: 1px solid #ddd;
             position: relative;
+            height: 100%;
         }
         .receipt-header { border-bottom: 2px solid var(--blue-dark); margin-bottom: 15px; padding-bottom: 10px; }
         .concept-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f1f1; }
@@ -47,10 +47,9 @@
 <div class="container py-4">
     <div class="text-center mb-4">
         <h2 class="fw-bold">CÁLCULO DE RECIBO DE AGUA - SEDAPAL</h2>
-        <p class="text-muted">TRES INQUILINOS</p>
+        <p class="text-muted">CINCO INQUILINOS</p>
     </div>
 
-    <!-- DATOS PRINCIPALES -->
     <div class="card main-card mb-5">
         <div class="card-header bg-white fw-bold text-primary">RELLENAR LOS DATOS DEL RECIBO TOTAL DE AGUA</div>
         <div class="card-body">
@@ -103,13 +102,11 @@
         </div>
     </div>
 
-    <!-- GRILLA DE INQUILINOS -->
     <div class="row g-4" id="tenants_grid"></div>
 </div>
 
 <script>
     function calc() {
-        // 1. Captura de datos globales
         const getVal = (id) => parseFloat(document.getElementById(id)?.value) || 0;
         
         const d = {
@@ -126,7 +123,6 @@
             nTenants: parseInt(document.getElementById('n_tenants').value) || 1
         };
 
-        // 2. Cálculo de días totales
         let totalDays = 0;
         if (!isNaN(d.mCurrD) && !isNaN(d.mPrevD)) {
             totalDays = Math.floor((d.mCurrD - d.mPrevD) / (864e5)) + 1;
@@ -137,9 +133,8 @@
         const tAgua = diffTotal > 0 ? (d.vWater / diffTotal) : 0;
         const tDesague = diffTotal > 0 ? (d.vSewer / diffTotal) : 0;
 
-        // 3. Bucle para inquilinos
-        for (let i = 1; i <= 3; i++) {
-            // Verificamos si los elementos existen antes de operar
+        // Bucle extendido a 5 inquilinos
+        for (let i = 1; i <= 5; i++) {
             const elPrev = document.getElementById(`i${i}_prev_r`);
             if (!elPrev) continue; 
 
@@ -168,7 +163,6 @@
             
             const total = cWater + cSewer + cFixed + cIgv + cMora + cRedAnt + cRedAct;
 
-            // Renderizado seguro
             const safeSetText = (id, val) => {
                 const el = document.getElementById(id);
                 if (el) el.innerText = (isNaN(val) || !isFinite(val)) ? "0.00" : val.toFixed(2);
@@ -189,7 +183,8 @@
     function render() {
         const grid = document.getElementById('tenants_grid');
         let html = '';
-        for(let i=1; i<=3; i++) {
+        // Renderizado extendido a 5 inquilinos
+        for(let i=1; i<=5; i++) {
             html += `
             <div class="col-lg-4 col-md-6">
                 <div class="receipt-container" id="pdf_area_${i}">
@@ -212,11 +207,11 @@
                                 <input type="number" id="i${i}_curr_r" class="form-control form-control-sm input-editable" oninput="calc()">
                             </div>
                             <div class="col-6">
-                                <label class="small fw-bold">Fecha Lectura Anterior</label>
+                                <label class="small fw-bold">Fecha Anterior</label>
                                 <input type="date" id="i${i}_prev_d" class="form-control form-control-sm input-editable" oninput="calc()">
                             </div>
                             <div class="col-6">
-                                <label class="small fw-bold">Fecha Lectura Actual</label>
+                                <label class="small fw-bold">Fecha Actual</label>
                                 <input type="date" id="i${i}_curr_d" class="form-control form-control-sm input-editable" oninput="calc()">
                             </div>
                         </div>
@@ -241,53 +236,36 @@
             </div>`;
         }
         grid.innerHTML = html;
-        // Pequeño delay para asegurar que el DOM cargó
         setTimeout(calc, 100);
     }
 
     async function exportPDF(id) {
-    const element = document.getElementById(`pdf_area_${id}`);
-    const button = document.getElementById(`btn_pdf_${id}`);
-    const inputs = document.getElementById(`inputs_${id}`);
+        const element = document.getElementById(`pdf_area_${id}`);
+        const button = document.getElementById(`btn_pdf_${id}`);
+        const inputs = document.getElementById(`inputs_${id}`);
 
-    if (!element) {
-        console.error("No se encontró el área del PDF");
-        return;
-    }
+        if (!element) return;
 
-    // Ocultar elementos que no queremos en el PDF
-    button.style.visibility = 'hidden';
-    if (inputs) inputs.style.setProperty('display', 'none', 'important');
+        button.style.visibility = 'hidden';
+        if (inputs) inputs.style.setProperty('display', 'none', 'important');
 
-    const opt = {
-        margin: [10, 5, 10, 5], // [top, left, bottom, right]
-        filename: `Recibo_Inquilino_${id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            letterRendering: true,
-            scrollY: 0 
-        },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a5', 
-            orientation: 'portrait' 
+        const opt = {
+            margin: [10, 5, 10, 5],
+            filename: `Recibo_Inquilino_${id}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
+            jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+        };
+
+        try {
+            await html2pdf().set(opt).from(element).save();
+        } catch (error) {
+            console.error("Error al generar PDF:", error);
+        } finally {
+            button.style.visibility = 'visible';
+            if (inputs) inputs.style.setProperty('display', 'flex', 'important');
         }
-    };
-
-    try {
-        // Ejecutar la generación
-        await html2pdf().set(opt).from(element).save();
-    } catch (error) {
-        console.error("Error al generar PDF:", error);
-        alert("Hubo un error al generar el PDF. Revisa la consola.");
-    } finally {
-        // Restaurar visibilidad
-        button.style.visibility = 'visible';
-        if (inputs) inputs.style.setProperty('display', 'flex', 'important');
     }
-}
     window.onload = render;
 </script>
 
