@@ -2,42 +2,54 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CALCULO RECIBO AGUA 5 INQUILINOS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CÁLCULO RECIBO AGUA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         :root { --blue-dark: #2c3e50; --blue-light: #3498db; }
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; color: #333; }
-        .main-card { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--blue-light); }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
         
-        .input-editable { 
-            background-color: #fffde7 !important; 
-            border: 1px solid #fbc02d !important;
-        }
-        .input-editable:focus {
-            background-color: #fff9c4 !important;
-            border-color: #f9a825 !important;
-            box-shadow: 0 0 0 0.25rem rgba(251, 192, 45, 0.25);
+        /* ESTILOS WEB */
+        .main-card { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--blue-light); }
+        .input-editable { background-color: #fffde7 !important; border: 1px solid #fbc02d !important; font-size: 16px !important; }
+        .receipt-container { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; height: 100%; width: 100%; box-sizing: border-box; }
+        .concept-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f1f1; }
+        .total-box-web { background: var(--blue-dark); color: white; padding: 10px; border-radius: 5px; margin-top: 15px; }
+        .small-label { font-size: 0.72rem; font-weight: bold; display: block; color: #555; margin-bottom: 2px; }
+
+        /* ESTILOS EXCLUSIVOS PARA EL PDF */
+        .pdf-only-section { display: none; }
+        
+        .pdf-total-badge {
+            background: #2c3e50; 
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 120px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            line-height: 1.2;
         }
 
-        .receipt-container { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            border: 1px solid #ddd;
-            position: relative;
-            height: 100%;
+        .pdf-layout-fix {
+            display: block !important;
+            margin: 0 auto !important;
+            padding: 15mm !important; 
+            width: 100% !important;
+            max-width: 190mm !important; 
+            box-sizing: border-box !important;
         }
-        .receipt-header { border-bottom: 2px solid var(--blue-dark); margin-bottom: 15px; padding-bottom: 10px; }
-        .concept-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f1f1; }
-        .total-box { background: var(--blue-dark); color: white; padding: 10px; border-radius: 5px; margin-top: 15px; }
-        
-        .btn-pdf { background-color: #e74c3c; color: white; border: none; transition: 0.3s; }
-        .btn-pdf:hover { background-color: #c0392b; color: white; }
+
+        .pdf-border-dashed {
+            border: 2px dashed #ccc !important;
+            padding: 10mm !important;
+            border-radius: 5px !important;
+        }
+
+        .pdf-text-fix { font-size: 0.9rem !important; }
 
         @media (max-width: 768px) { .container { padding: 10px; } }
     </style>
@@ -46,58 +58,24 @@
 
 <div class="container py-4">
     <div class="text-center mb-4">
-        <h2 class="fw-bold">CÁLCULO DE RECIBO DE AGUA - SEDAPAL</h2>
-        <p class="text-muted">CINCO INQUILINOS</p>
+        <h2 class="fw-bold">CÁLCULO DE RECIBO DE AGUA</h2>
+        <p class="text-muted">DATOS TOTALES DEL RECIBO SEDAPAL</p>
     </div>
 
     <div class="card main-card mb-5">
-        <div class="card-header bg-white fw-bold text-primary">RELLENAR LOS DATOS DEL RECIBO TOTAL DE AGUA</div>
         <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-2">
-                    <label class="small fw-bold">Lectura Anterior</label>
-                    <input type="number" id="m_prev_r" class="form-control form-control-sm input-editable" value="" oninput="calc()">
-                </div>
-                <div class="col-md-2">
-                    <label class="small fw-bold">Lectura Actual</label>
-                    <input type="number" id="m_curr_r" class="form-control form-control-sm input-editable" value="" oninput="calc()">
-                </div>
-                <div class="col-md-2">
-                    <label class="small fw-bold">Fecha Lectura Anterior</label>
-                    <input type="date" id="m_prev_d" class="form-control form-control-sm input-editable" value="0000-00-00" oninput="calc()">
-                </div>
-                <div class="col-md-2">
-                    <label class="small fw-bold">Fecha Lectura Actual</label>
-                    <input type="date" id="m_curr_d" class="form-control form-control-sm input-editable" value="0000-00-00" oninput="calc()">
-                </div>
-                <div class="col-md-2 col-6">
-                    <label class="small fw-bold">Agua (S/.)</label>
-                    <input type="number" id="v_water" class="form-control form-control-sm input-editable" value="" oninput="calc()">
-                </div>
-                <div class="col-md-2 col-6">
-                    <label class="small fw-bold">Alcantarillado</label>
-                    <input type="number" id="v_sewer" class="form-control form-control-sm input-editable" value="" oninput="calc()">
-                </div>
-                <div class="col-md-2 col-6">
-                    <label class="small fw-bold">Cargo Fijo</label>
-                    <input type="number" id="v_fixed" class="form-control form-control-sm input-editable" value="" oninput="calc()">
-                </div>
-                <div class="col-md-2 col-6">
-                    <label class="small fw-bold">Mora</label>
-                    <input type="number" id="v_mora" class="form-control form-control-sm input-editable" value="" oninput="calc()">
-                </div>
-                <div class="col-md-2 col-6">
-                    <label class="small fw-bold">N° Inquilinos</label>
-                    <input type="number" id="n_tenants" class="form-control form-control-sm input-editable" value="" oninput="calc()">
-                </div>
-                <div class="col-md-2 col-6">
-                    <label class="small fw-bold">Redondeo Anterior</label>
-                    <input type="number" id="v_red_ant" class="form-control form-control-sm input-editable" value="" oninput="calc()">
-                </div>
-                <div class="col-md-2 col-6">
-                    <label class="small fw-bold">Redondeo Actual</label>
-                    <input type="number" id="v_red_act" class="form-control form-control-sm input-editable" value="" oninput="calc()">
-                </div>
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md-2"><label class="small-label">Lec. Anterior</label><input type="number" id="m_prev_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Lec. Actual</label><input type="number" id="m_curr_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Fecha Ant.</label><input type="date" id="m_prev_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Fecha Act.</label><input type="date" id="m_curr_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Agua S/.</label><input type="number" id="v_water" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Alcantarillado</label><input type="number" id="v_sewer" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Cargo Fijo</label><input type="number" id="v_fixed" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Mora</label><input type="number" id="v_mora" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">N° Inquilinos</label><input type="number" id="n_tenants" class="form-control form-control-sm input-editable" value="1" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Red. Anterior</label><input type="number" id="v_red_ant" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Red. Actual</label><input type="number" id="v_red_act" class="form-control form-control-sm input-editable" oninput="calc()"></div>
             </div>
         </div>
     </div>
@@ -106,26 +84,28 @@
 </div>
 
 <script>
+    const meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+
     function calc() {
         const getVal = (id) => parseFloat(document.getElementById(id)?.value) || 0;
+        const mainDateVal = document.getElementById('m_curr_d').value;
+        const mainPrevDateVal = document.getElementById('m_prev_d').value;
         
+        let mesTexto = mainDateVal ? meses[new Date(mainDateVal + "T00:00:00").getMonth()] : "---";
+
         const d = {
-            mPrevR: getVal('m_prev_r'),
-            mCurrR: getVal('m_curr_r'),
-            mPrevD: new Date(document.getElementById('m_prev_d').value),
-            mCurrD: new Date(document.getElementById('m_curr_d').value),
-            vWater: getVal('v_water'),
-            vSewer: getVal('v_sewer'),
-            vFixed: getVal('v_fixed'),
-            vMora: getVal('v_mora'),
-            vRedAnt: getVal('v_red_ant'),
-            vRedAct: getVal('v_red_act'),
+            mPrevR: getVal('m_prev_r'), mCurrR: getVal('m_curr_r'),
+            mPrevD: new Date(mainPrevDateVal + "T00:00:00"),
+            mCurrD: new Date(mainDateVal + "T00:00:00"),
+            vWater: getVal('v_water'), vSewer: getVal('v_sewer'), vFixed: getVal('v_fixed'),
+            vMora: getVal('v_mora'), vRedAnt: getVal('v_red_ant'), vRedAct: getVal('v_red_act'),
             nTenants: parseInt(document.getElementById('n_tenants').value) || 1
         };
 
+        // Días totales del recibo principal
         let totalDays = 0;
         if (!isNaN(d.mCurrD) && !isNaN(d.mPrevD)) {
-            totalDays = Math.floor((d.mCurrD - d.mPrevD) / (864e5)) + 1;
+            totalDays = Math.floor((d.mCurrD - d.mPrevD) / 864e5) + 1;
         }
         totalDays = totalDays > 0 ? totalDays : 0;
 
@@ -133,19 +113,19 @@
         const tAgua = diffTotal > 0 ? (d.vWater / diffTotal) : 0;
         const tDesague = diffTotal > 0 ? (d.vSewer / diffTotal) : 0;
 
-        // Bucle extendido a 5 inquilinos
         for (let i = 1; i <= 5; i++) {
             const elPrev = document.getElementById(`i${i}_prev_r`);
-            if (!elPrev) continue; 
+            if (!elPrev) continue;
 
             const iPrevR = parseFloat(elPrev.value) || 0;
             const iCurrR = parseFloat(document.getElementById(`i${i}_curr_r`).value) || 0;
-            const iPrevD = new Date(document.getElementById(`i${i}_prev_d`).value);
-            const iCurrD = new Date(document.getElementById(`i${i}_curr_d`).value);
+            const iPrevD = new Date(document.getElementById(`i${i}_prev_d`).value + "T00:00:00");
+            const iCurrD = new Date(document.getElementById(`i${i}_curr_d`).value + "T00:00:00");
 
+            // Cálculo de consumo diario proyectado (Lógica Original)
             let iDays = 0;
             if (!isNaN(iCurrD) && !isNaN(iPrevD)) {
-                iDays = Math.floor((iCurrD - iPrevD) / (864e5)) + 1;
+                iDays = Math.floor((iCurrD - iPrevD) / 864e5) + 1;
             }
             iDays = iDays > 0 ? iDays : 0;
 
@@ -160,112 +140,119 @@
             const cMora = d.vMora / d.nTenants;
             const cRedAnt = d.vRedAnt / d.nTenants;
             const cRedAct = d.vRedAct / d.nTenants;
-            
             const total = cWater + cSewer + cFixed + cIgv + cMora + cRedAnt + cRedAct;
 
-            const safeSetText = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) el.innerText = (isNaN(val) || !isFinite(val)) ? "0.00" : val.toFixed(2);
-            };
+            document.getElementById(`pdf_mes_${i}`).innerText = mesTexto;
+            document.getElementById(`pdf_top_total_${i}`).innerText = `S/. ${total.toFixed(2)}`;
+            document.getElementById(`pdf_lec_txt_${i}`).innerText = `${iPrevR.toFixed(2)} (ANT) - ${iCurrR.toFixed(2)} (ACT)`;
 
-            safeSetText(`i${i}_res_cons`, iConsMes);
-            safeSetText(`i${i}_val_water`, cWater);
-            safeSetText(`i${i}_val_sewer`, cSewer);
-            safeSetText(`i${i}_val_fixed`, cFixed);
-            safeSetText(`i${i}_val_igv`, cIgv);
-            safeSetText(`i${i}_val_mora`, cMora);
-            safeSetText(`i${i}_val_red_ant`, cRedAnt);
-            safeSetText(`i${i}_val_red_act`, cRedAct);
-            safeSetText(`i${i}_val_total`, total);
+            const safeSet = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val.toFixed(2); };
+            safeSet(`i${i}_res_cons`, iConsMes);
+            safeSet(`i${i}_val_water`, cWater);
+            safeSet(`i${i}_val_sewer`, cSewer);
+            safeSet(`i${i}_val_fixed`, cFixed);
+            safeSet(`i${i}_val_igv`, cIgv);
+            safeSet(`i${i}_val_mora`, cMora);
+            safeSet(`i${i}_val_red_ant`, cRedAnt);
+            safeSet(`i${i}_val_red_act`, cRedAct);
+            safeSet(`i${i}_val_total`, total);
         }
     }
 
     function render() {
         const grid = document.getElementById('tenants_grid');
         let html = '';
-        // Renderizado extendido a 5 inquilinos
         for(let i=1; i<=5; i++) {
             html += `
-            <div class="col-lg-4 col-md-6">
+            <div class="col-lg-4 col-md-6 col-12">
                 <div class="receipt-container" id="pdf_area_${i}">
-                    <div class="receipt-header d-flex justify-content-between align-items-center">
-                        <div>
-                            <input type="text" class="form-control form-control-sm border-0 p-0 fw-bold" 
-                                value="Inquilino #${i}" style="background: transparent; color: var(--blue-dark); font-size: 1.2rem;">
+                    <div id="pdf_content_wrapper_${i}">
+                        <div id="pdf_header_${i}" class="pdf-only-section justify-content-between align-items-center mb-4">
+                            <div>
+                                <h2 class="fw-bold m-0" style="color:#2c3e50; font-size: 1.5rem;">RECIBO DE AGUA</h2>
+                                <p class="fw-bold mb-0">MES: <span id="pdf_mes_${i}">---</span></p>
+                                <h4 class="text-primary fw-bold">Inquilino #${i}</h4>
+                            </div>
+                            <div class="pdf-total-badge" id="pdf_top_total_${i}">S/. 0.00</div>
                         </div>
-                        <button class="btn btn-pdf btn-sm d-print-none" onclick="exportPDF(${i})" id="btn_pdf_${i}">PDF</button>
-                    </div>
 
-                    <div class="mb-3">
-                        <div class="row g-1 mb-2 d-print-none" id="inputs_${i}">
-                            <div class="col-6">
-                                <label class="small fw-bold">Lectura Anterior</label>
-                                <input type="number" id="i${i}_prev_r" class="form-control form-control-sm input-editable" oninput="calc()">
-                            </div>
-                            <div class="col-6">
-                                <label class="small fw-bold">Lectura Actual</label>
-                                <input type="number" id="i${i}_curr_r" class="form-control form-control-sm input-editable" oninput="calc()">
-                            </div>
-                            <div class="col-6">
-                                <label class="small fw-bold">Fecha Anterior</label>
-                                <input type="date" id="i${i}_prev_d" class="form-control form-control-sm input-editable" oninput="calc()">
-                            </div>
-                            <div class="col-6">
-                                <label class="small fw-bold">Fecha Actual</label>
-                                <input type="date" id="i${i}_curr_d" class="form-control form-control-sm input-editable" oninput="calc()">
-                            </div>
+                        <div id="pdf_lecturas_${i}" class="pdf-only-section border-bottom pb-2 mb-3">
+                            <span class="fw-bold" style="font-size: 0.9rem;" id="pdf_lec_txt_${i}">0.00 (ANT) - 0.00 (ACT)</span>
                         </div>
-                        <div class="concept-item"><span>Consumo estimado:</span><strong><span id="i${i}_res_cons">0</span> m³</strong></div>
-                    </div>
 
-                    <div class="concepts small">
-                        <div class="concept-item"><span>Agua</span><span> <span id="i${i}_val_water">0</span></span></div>
-                        <div class="concept-item"><span>Alcantarillado</span><span> <span id="i${i}_val_sewer">0</span></span></div>
-                        <div class="concept-item"><span>Cargo Fijo</span><span> <span id="i${i}_val_fixed">0</span></span></div>
-                        <div class="concept-item"><span>IGV (18%)</span><span> <span id="i${i}_val_igv">0</span></span></div>
-                        <div class="concept-item"><span>Mora</span><span> <span id="i${i}_val_mora">0</span></span></div>
-                        <div class="concept-item"><span>Redondeo Anterior</span><span> <span id="i${i}_val_red_ant">0</span></span></div>
-                        <div class="concept-item"><span>Redondeo Actual</span><span> <span id="i${i}_val_red_act">0</span></span></div>
-                    </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3 d-print-none" id="web_header_${i}">
+                            <h5 class="fw-bold m-0">Inquilino #${i}</h5>
+                            <button class="btn btn-danger btn-sm" onclick="exportPDF(${i})">Generar PDF</button>
+                        </div>
 
-                    <div class="total-box d-flex justify-content-between">
-                        <span>TOTAL A PAGAR</span>
-                        <span class="fw-bold">S/. <span id="i${i}_val_total">0</span></span>
+                        <div class="row g-2 mb-3 d-print-none" id="inputs_${i}">
+                            <div class="col-6"><label class="small-label">Lec. Anterior</label><input type="number" id="i${i}_prev_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                            <div class="col-6"><label class="small-label">Lec. Actual</label><input type="number" id="i${i}_curr_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                            <div class="col-6"><label class="small-label">Fecha Ant.</label><input type="date" id="i${i}_prev_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                            <div class="col-6"><label class="small-label">Fecha Act.</label><input type="date" id="i${i}_curr_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                        </div>
+
+                        <div class="concept-item fw-bold pdf-text-fix"><span>Consumo:</span><span><span id="i${i}_res_cons">0.00</span> m³</span></div>
+                        <div class="concept-item pdf-text-fix"><span>Agua</span><span>S/ <span id="i${i}_val_water">0.00</span></span></div>
+                        <div class="concept-item pdf-text-fix"><span>Alcantarillado</span><span>S/ <span id="i${i}_val_sewer">0.00</span></span></div>
+                        <div class="concept-item pdf-text-fix"><span>Cargo Fijo</span><span>S/ <span id="i${i}_val_fixed">0.00</span></span></div>
+                        <div class="concept-item pdf-text-fix"><span>IGV (18%)</span><span>S/ <span id="i${i}_val_igv">0.00</span></span></div>
+                        <div class="concept-item pdf-text-fix"><span>Mora</span><span>S/ <span id="i${i}_val_mora">0.00</span></span></div>
+                        <div class="concept-item pdf-text-fix"><span>Redondeo Ant.</span><span>S/ <span id="i${i}_val_red_ant">0.00</span></span></div>
+                        <div class="concept-item pdf-text-fix"><span>Redondeo Act.</span><span>S/ <span id="i${i}_val_red_act">0.00</span></span></div>
+
+                        <div class="total-box-web d-flex justify-content-between d-print-none" id="web_total_${i}">
+                            <span>TOTAL A PAGAR</span>
+                            <span class="fw-bold">S/. <span id="i${i}_val_total">0.00</span></span>
+                        </div>
                     </div>
                 </div>
             </div>`;
         }
         grid.innerHTML = html;
-        setTimeout(calc, 100);
+        calc();
     }
 
     async function exportPDF(id) {
         const element = document.getElementById(`pdf_area_${id}`);
-        const button = document.getElementById(`btn_pdf_${id}`);
-        const inputs = document.getElementById(`inputs_${id}`);
+        const wrapper = document.getElementById(`pdf_content_wrapper_${id}`);
+        const hPdf = document.getElementById(`pdf_header_${id}`);
+        const lPdf = document.getElementById(`pdf_lecturas_${id}`);
+        const hWeb = document.getElementById(`web_header_${id}`);
+        const iWeb = document.getElementById(`inputs_${id}`);
+        const tWeb = document.getElementById(`web_total_${id}`);
 
-        if (!element) return;
-
-        button.style.visibility = 'hidden';
-        if (inputs) inputs.style.setProperty('display', 'none', 'important');
+        hPdf.style.display = 'flex';
+        lPdf.style.display = 'block';
+        element.classList.add('pdf-layout-fix');
+        wrapper.classList.add('pdf-border-dashed'); 
+        
+        hWeb.style.setProperty('display', 'none', 'important');
+        iWeb.style.setProperty('display', 'none', 'important');
+        tWeb.style.setProperty('display', 'none', 'important');
 
         const opt = {
-            margin: [10, 5, 10, 5],
+            margin: [0, 0, 0, 0], 
             filename: `Recibo_Inquilino_${id}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
-            jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
         try {
             await html2pdf().set(opt).from(element).save();
-        } catch (error) {
-            console.error("Error al generar PDF:", error);
         } finally {
-            button.style.visibility = 'visible';
-            if (inputs) inputs.style.setProperty('display', 'flex', 'important');
+            hPdf.style.display = 'none';
+            lPdf.style.display = 'none';
+            element.classList.remove('pdf-layout-fix');
+            wrapper.classList.remove('pdf-border-dashed');
+            
+            hWeb.style.setProperty('display', 'flex', 'important');
+            iWeb.style.setProperty('display', 'flex', 'important');
+            tWeb.style.setProperty('display', 'flex', 'important');
         }
     }
+
     window.onload = render;
 </script>
 
