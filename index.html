@@ -15,7 +15,6 @@
         .main-card { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--blue-light); }
         .input-editable { background-color: #fffde7 !important; border: 1px solid #fbc02d !important; font-size: 16px !important; }
         
-        /* Título editable para nombres de inquilinos */
         .tenant-name-input {
             border: 1px solid #fbc02d !important;
             background-color: #fffde7 !important;
@@ -29,23 +28,22 @@
 
         .receipt-container { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; height: 100%; width: 100%; box-sizing: border-box; }
         .concept-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f1f1; }
-        .total-box-web { background: var(--blue-dark); color: white; padding: 10px; border-radius: 5px; margin-top: 15px; }
+        
+        /* Estilo para el total */
+        .total-box-web, .total-box-pdf { 
+            background: var(--blue-dark); 
+            color: white; 
+            padding: 12px; 
+            border-radius: 5px; 
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
         .small-label { font-size: 0.72rem; font-weight: bold; display: block; color: #555; margin-bottom: 2px; }
 
         /* ESTILOS EXCLUSIVOS PARA EL PDF */
         .pdf-only-section { display: none; }
-        
-        .pdf-total-badge {
-            background: #2c3e50; 
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            text-align: center;
-            min-width: 120px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            line-height: 1.2;
-        }
 
         .pdf-tenant-title {
             color: #3498db;
@@ -79,23 +77,23 @@
 <div class="container py-4">
     <div class="text-center mb-4">
         <h2 class="fw-bold">CÁLCULO DE RECIBO DE AGUA</h2>
-        <p class="text-muted">DATOS TOTALES DEL RECIBO SEDAPAL</p>
+        <p class="text-muted">PARA CINCO INQUILINOS</p>
     </div>
 
     <div class="card main-card mb-5">
         <div class="card-body">
             <div class="row g-2 align-items-end">
-                <div class="col-6 col-md-2"><label class="small-label">Lec. Anterior</label><input type="number" id="m_prev_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
-                <div class="col-6 col-md-2"><label class="small-label">Lec. Actual</label><input type="number" id="m_curr_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
-                <div class="col-6 col-md-2"><label class="small-label">Fecha Ant.</label><input type="date" id="m_prev_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
-                <div class="col-6 col-md-2"><label class="small-label">Fecha Act.</label><input type="date" id="m_curr_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Lectura Anterior</label><input type="number" id="m_prev_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Lectura Actual</label><input type="number" id="m_curr_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Fecha Anterior</label><input type="date" id="m_prev_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Fecha Actual</label><input type="date" id="m_curr_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
                 <div class="col-6 col-md-2"><label class="small-label">Agua S/.</label><input type="number" id="v_water" class="form-control form-control-sm input-editable" oninput="calc()"></div>
                 <div class="col-6 col-md-2"><label class="small-label">Alcantarillado</label><input type="number" id="v_sewer" class="form-control form-control-sm input-editable" oninput="calc()"></div>
                 <div class="col-6 col-md-2"><label class="small-label">Cargo Fijo</label><input type="number" id="v_fixed" class="form-control form-control-sm input-editable" oninput="calc()"></div>
                 <div class="col-6 col-md-2"><label class="small-label">Mora</label><input type="number" id="v_mora" class="form-control form-control-sm input-editable" oninput="calc()"></div>
                 <div class="col-6 col-md-2"><label class="small-label">N° Inquilinos</label><input type="number" id="n_tenants" class="form-control form-control-sm input-editable" value="1" oninput="calc()"></div>
-                <div class="col-6 col-md-2"><label class="small-label">Red. Anterior</label><input type="number" id="v_red_ant" class="form-control form-control-sm input-editable" oninput="calc()"></div>
-                <div class="col-6 col-md-2"><label class="small-label">Red. Actual</label><input type="number" id="v_red_act" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Redondeo Anterior</label><input type="number" id="v_red_ant" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                <div class="col-6 col-md-2"><label class="small-label">Redondeo Actual</label><input type="number" id="v_red_act" class="form-control form-control-sm input-editable" oninput="calc()"></div>
             </div>
         </div>
     </div>
@@ -157,11 +155,15 @@
             const cRedAct = d.vRedAct / d.nTenants;
             const total = cWater + cSewer + cFixed + cIgv + cMora + cRedAnt + cRedAct;
 
-            // Actualizar PDF
+            // Actualizar textos PDF
             document.getElementById(`pdf_mes_${i}`).innerText = mesTexto;
-            document.getElementById(`pdf_top_total_${i}`).innerText = `S/. ${total.toFixed(2)}`;
             document.getElementById(`pdf_lec_txt_${i}`).innerText = `${iPrevR.toFixed(2)} (ANT) - ${iCurrR.toFixed(2)} (ACT)`;
             document.getElementById(`pdf_tenant_name_${i}`).innerText = document.getElementById(`i${i}_name`).value;
+            
+            // Actualizar Total PDF
+            if(document.getElementById(`i${i}_pdf_total_val`)) {
+                document.getElementById(`i${i}_pdf_total_val`).innerText = total.toFixed(2);
+            }
 
             const safeSet = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val.toFixed(2); };
             safeSet(`i${i}_res_cons`, iConsMes);
@@ -184,13 +186,10 @@
             <div class="col-lg-4 col-md-6 col-12">
                 <div class="receipt-container" id="pdf_area_${i}">
                     <div id="pdf_content_wrapper_${i}">
-                        <div id="pdf_header_${i}" class="pdf-only-section justify-content-between align-items-center mb-4">
-                            <div>
-                                <h2 class="fw-bold m-0" style="color:#2c3e50; font-size: 1.5rem;">RECIBO DE AGUA</h2>
-                                <p class="fw-bold mb-0">MES: <span id="pdf_mes_${i}">---</span></p>
-                                <p class="pdf-tenant-title" id="pdf_tenant_name_${i}">Inquilino #${i}</p>
-                            </div>
-                            <div class="pdf-total-badge" id="pdf_top_total_${i}">S/. 0.00</div>
+                        <div id="pdf_header_${i}" class="pdf-only-section mb-4">
+                            <h2 class="fw-bold m-0" style="color:#2c3e50; font-size: 1.5rem;">RECIBO DE AGUA</h2>
+                            <p class="fw-bold mb-0">MES: <span id="pdf_mes_${i}">---</span></p>
+                            <p class="pdf-tenant-title" id="pdf_tenant_name_${i}">Inquilino #${i}</p>
                         </div>
 
                         <div id="pdf_lecturas_${i}" class="pdf-only-section border-bottom pb-2 mb-3">
@@ -203,10 +202,10 @@
                         </div>
 
                         <div class="row g-2 mb-3 d-print-none" id="inputs_${i}">
-                            <div class="col-6"><label class="small-label">Lec. Anterior</label><input type="number" id="i${i}_prev_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
-                            <div class="col-6"><label class="small-label">Lec. Actual</label><input type="number" id="i${i}_curr_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
-                            <div class="col-6"><label class="small-label">Fecha Ant.</label><input type="date" id="i${i}_prev_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
-                            <div class="col-6"><label class="small-label">Fecha Act.</label><input type="date" id="i${i}_curr_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                            <div class="col-6"><label class="small-label">Lectura Anterior</label><input type="number" id="i${i}_prev_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                            <div class="col-6"><label class="small-label">Lectura Actual</label><input type="number" id="i${i}_curr_r" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                            <div class="col-6"><label class="small-label">Fecha Anterior</label><input type="date" id="i${i}_prev_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
+                            <div class="col-6"><label class="small-label">Fecha Actual</label><input type="date" id="i${i}_curr_d" class="form-control form-control-sm input-editable" oninput="calc()"></div>
                         </div>
 
                         <div class="concept-item fw-bold pdf-text-fix"><span>Consumo:</span><span><span id="i${i}_res_cons">0.00</span> m³</span></div>
@@ -215,12 +214,16 @@
                         <div class="concept-item pdf-text-fix"><span>Cargo Fijo</span><span>S/ <span id="i${i}_val_fixed">0.00</span></span></div>
                         <div class="concept-item pdf-text-fix"><span>IGV (18%)</span><span>S/ <span id="i${i}_val_igv">0.00</span></span></div>
                         <div class="concept-item pdf-text-fix"><span>Mora</span><span>S/ <span id="i${i}_val_mora">0.00</span></span></div>
-                        <div class="concept-item pdf-text-fix"><span>Redondeo Ant.</span><span>S/ <span id="i${i}_val_red_ant">0.00</span></span></div>
-                        <div class="concept-item pdf-text-fix"><span>Redondeo Act.</span><span>S/ <span id="i${i}_val_red_act">0.00</span></span></div>
+                        <div class="concept-item pdf-text-fix"><span>Redondeo Anterior</span><span>S/ <span id="i${i}_val_red_ant">0.00</span></span></div>
+                        <div class="concept-item pdf-text-fix"><span>Redondeo Actual</span><span>S/ <span id="i${i}_val_red_act">0.00</span></span></div>
 
                         <div class="total-box-web d-flex justify-content-between d-print-none" id="web_total_${i}">
                             <span>TOTAL A PAGAR</span>
                             <span class="fw-bold">S/. <span id="i${i}_val_total">0.00</span></span>
+                        </div>
+
+                        <div id="pdf_total_box_${i}" class="total-box-pdf pdf-only-section">
+                            TOTAL A PAGAR: S/ <span id="i${i}_pdf_total_val">0.00</span>
                         </div>
                     </div>
                 </div>
@@ -235,12 +238,16 @@
         const wrapper = document.getElementById(`pdf_content_wrapper_${id}`);
         const hPdf = document.getElementById(`pdf_header_${id}`);
         const lPdf = document.getElementById(`pdf_lecturas_${id}`);
+        const tPdf = document.getElementById(`pdf_total_box_${id}`);
+        
         const hWeb = document.getElementById(`web_header_${id}`);
         const iWeb = document.getElementById(`inputs_${id}`);
         const tWeb = document.getElementById(`web_total_${id}`);
 
-        hPdf.style.display = 'flex';
+        hPdf.style.display = 'block';
         lPdf.style.display = 'block';
+        tPdf.style.display = 'block';
+        
         element.classList.add('pdf-layout-fix');
         wrapper.classList.add('pdf-border-dashed'); 
         
@@ -249,7 +256,7 @@
         tWeb.style.setProperty('display', 'none', 'important');
 
         const opt = {
-            margin: [0, 0, 0, 0], 
+            margin: [5, 5, 5, 5], 
             filename: `Recibo_${document.getElementById(`i${id}_name`).value}.pdf`,
             image: { type: 'jpeg', quality: 1 },
             html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
@@ -261,6 +268,8 @@
         } finally {
             hPdf.style.display = 'none';
             lPdf.style.display = 'none';
+            tPdf.style.display = 'none';
+            
             element.classList.remove('pdf-layout-fix');
             wrapper.classList.remove('pdf-border-dashed');
             
