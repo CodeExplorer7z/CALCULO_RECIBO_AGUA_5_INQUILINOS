@@ -14,6 +14,19 @@
         /* ESTILOS WEB */
         .main-card { border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--blue-light); }
         .input-editable { background-color: #fffde7 !important; border: 1px solid #fbc02d !important; font-size: 16px !important; }
+        
+        /* Título editable para nombres de inquilinos */
+        .tenant-name-input {
+            border: 1px solid #fbc02d !important;
+            background-color: #fffde7 !important;
+            font-weight: bold;
+            font-size: 1.1rem;
+            width: 100%;
+            padding: 2px 5px;
+            border-radius: 4px;
+            color: var(--blue-dark);
+        }
+
         .receipt-container { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; height: 100%; width: 100%; box-sizing: border-box; }
         .concept-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f1f1; }
         .total-box-web { background: var(--blue-dark); color: white; padding: 10px; border-radius: 5px; margin-top: 15px; }
@@ -32,6 +45,13 @@
             font-size: 1.3rem;
             font-weight: bold;
             line-height: 1.2;
+        }
+
+        .pdf-tenant-title {
+            color: #3498db;
+            font-weight: bold;
+            font-size: 1.3rem;
+            margin: 0;
         }
 
         .pdf-layout-fix {
@@ -90,19 +110,17 @@
         const getVal = (id) => parseFloat(document.getElementById(id)?.value) || 0;
         const mainDateVal = document.getElementById('m_curr_d').value;
         const mainPrevDateVal = document.getElementById('m_prev_d').value;
-        
         let mesTexto = mainDateVal ? meses[new Date(mainDateVal + "T00:00:00").getMonth()] : "---";
 
         const d = {
-            mPrevR: getVal('m_prev_r'), mCurrR: getVal('m_curr_r'),
             mPrevD: new Date(mainPrevDateVal + "T00:00:00"),
             mCurrD: new Date(mainDateVal + "T00:00:00"),
+            mPrevR: getVal('m_prev_r'), mCurrR: getVal('m_curr_r'),
             vWater: getVal('v_water'), vSewer: getVal('v_sewer'), vFixed: getVal('v_fixed'),
             vMora: getVal('v_mora'), vRedAnt: getVal('v_red_ant'), vRedAct: getVal('v_red_act'),
             nTenants: parseInt(document.getElementById('n_tenants').value) || 1
         };
 
-        // Días totales del recibo principal
         let totalDays = 0;
         if (!isNaN(d.mCurrD) && !isNaN(d.mPrevD)) {
             totalDays = Math.floor((d.mCurrD - d.mPrevD) / 864e5) + 1;
@@ -122,13 +140,10 @@
             const iPrevD = new Date(document.getElementById(`i${i}_prev_d`).value + "T00:00:00");
             const iCurrD = new Date(document.getElementById(`i${i}_curr_d`).value + "T00:00:00");
 
-            // Cálculo de consumo diario proyectado (Lógica Original)
             let iDays = 0;
             if (!isNaN(iCurrD) && !isNaN(iPrevD)) {
                 iDays = Math.floor((iCurrD - iPrevD) / 864e5) + 1;
             }
-            iDays = iDays > 0 ? iDays : 0;
-
             const iDiff = iCurrR - iPrevR;
             const iDaily = (iDays > 0 && iDiff > 0) ? (iDiff / iDays) : 0;
             const iConsMes = iDaily * totalDays;
@@ -142,9 +157,11 @@
             const cRedAct = d.vRedAct / d.nTenants;
             const total = cWater + cSewer + cFixed + cIgv + cMora + cRedAnt + cRedAct;
 
+            // Actualizar PDF
             document.getElementById(`pdf_mes_${i}`).innerText = mesTexto;
             document.getElementById(`pdf_top_total_${i}`).innerText = `S/. ${total.toFixed(2)}`;
             document.getElementById(`pdf_lec_txt_${i}`).innerText = `${iPrevR.toFixed(2)} (ANT) - ${iCurrR.toFixed(2)} (ACT)`;
+            document.getElementById(`pdf_tenant_name_${i}`).innerText = document.getElementById(`i${i}_name`).value;
 
             const safeSet = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val.toFixed(2); };
             safeSet(`i${i}_res_cons`, iConsMes);
@@ -171,7 +188,7 @@
                             <div>
                                 <h2 class="fw-bold m-0" style="color:#2c3e50; font-size: 1.5rem;">RECIBO DE AGUA</h2>
                                 <p class="fw-bold mb-0">MES: <span id="pdf_mes_${i}">---</span></p>
-                                <h4 class="text-primary fw-bold">Inquilino #${i}</h4>
+                                <p class="pdf-tenant-title" id="pdf_tenant_name_${i}">Inquilino #${i}</p>
                             </div>
                             <div class="pdf-total-badge" id="pdf_top_total_${i}">S/. 0.00</div>
                         </div>
@@ -181,8 +198,8 @@
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-3 d-print-none" id="web_header_${i}">
-                            <h5 class="fw-bold m-0">Inquilino #${i}</h5>
-                            <button class="btn btn-danger btn-sm" onclick="exportPDF(${i})">Generar PDF</button>
+                            <input type="text" id="i${i}_name" class="tenant-name-input" value="Inquilino #${i}" oninput="calc()">
+                            <button class="btn btn-danger btn-sm ms-2" onclick="exportPDF(${i})">PDF</button>
                         </div>
 
                         <div class="row g-2 mb-3 d-print-none" id="inputs_${i}">
@@ -233,7 +250,7 @@
 
         const opt = {
             margin: [0, 0, 0, 0], 
-            filename: `Recibo_Inquilino_${id}.pdf`,
+            filename: `Recibo_${document.getElementById(`i${id}_name`).value}.pdf`,
             image: { type: 'jpeg', quality: 1 },
             html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
